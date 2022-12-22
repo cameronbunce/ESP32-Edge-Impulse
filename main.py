@@ -1,15 +1,16 @@
-# Circuit Python for ESP32 Feather Huzzah from Adafruit
+# MicroPython for ESP32
 # mapping DS18B20 temperature sensors to USB Serial output for 
 # Edge Impulse Data Forwarder
 
-# Code largely based on Adafruit reference code
-# https://learn.adafruit.com/using-ds18b20-temperature-sensor-with-circuitpython/circuitpython
+# Code largely based on MicroPython Reference code
+# http://docs.micropython.org/en/latest/esp32/quickref.html#onewire-driver
 
-
-import board
-from adafruit_onewire.bus import OneWireBus
-ow_bus = OneWireBus(board.D5)
-
-devices = ow_bus.scan()
-for device in devices:
-    print("ROM = {} \tFamily = 0x{:02x}".format([hex(i) for i in device.rom], device.family_code))
+import time, ds18x20, onewire
+from machine import Pin
+ow = onewire.OneWire(Pin(2))
+ds = ds18x20.DS18X20(ow)
+roms = ds.scan()
+ds.convert_temp()
+time.sleep_ms(750)
+for rom in roms:
+    print(ds.read_temp(rom))
