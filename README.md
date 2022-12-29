@@ -52,7 +52,7 @@ I noticed in the spec for the API that I need to do some fancy signing and crypt
 
 Nightly builds for the ESP32 have mip built in. mip is the micropython version of pip, which sounds awesome, so I'll throw away what I've got on the board and load a bin file labeled unstable and trust that nothing will break!
 
-'''
+```
 cameron@Kitchen-iMac Downloads % esptool.py --chip esp32 -p /dev/tty.usbserial-0001 erase_flash
 esptool.py v4.4
 Serial port /dev/tty.usbserial-0001
@@ -87,12 +87,13 @@ Wrote 1559776 bytes (1029813 compressed) at 0x00001000 in 25.1 seconds (effectiv
 Hash of data verified.
 
 Leaving...
-Hard resetting via RTS pin...'''
+Hard resetting via RTS pin...
+```
 
 
 With that in place, I got on wifi, ( which tripped a brownout error until I doubly connected 5v from the same USB bus power for extra juice) and banged out this 
 
-'''
+```
 >>> import mip
 >>> mip.install(hmac)
 Traceback (most recent call last):
@@ -102,7 +103,8 @@ NameError: name 'hmac' isn't defined
 Installing hmac (latest) from https://micropython.org/pi/v2 to /lib
 Copying: /lib/hmac.mpy
 Done
->>> '''
+>>> 
+```
 
 which was pretty cool
 
@@ -111,7 +113,8 @@ I'm looking at my project keys page in Edge Impulse and there is a link the 'Dat
 
 The Ingestion Service offers this example 
 
-'''# Install requests via: `pip3 install requests`
+```python
+# Install requests via: `pip3 install requests`
 
 with open('somefile.cbor', 'r') as file:
     res = requests.post(url='https://ingestion.edgeimpulse.com/api/training/data',
@@ -126,13 +129,14 @@ with open('somefile.cbor', 'r') as file:
     if (res.status_code == 200):
         print('Uploaded file to Edge Impulse', res.status_code, res.content)
     else:
-        print('Failed to upload file to Edge Impulse', res.status_code, res.content)'''
+        print('Failed to upload file to Edge Impulse', res.status_code, res.content)
+```
 
-Which should work with a little '''import urequests as requets''' but that '''somefile.cbor''' is a new mystery. Thankfully a linked document there provides a little help code that I'll paste here and work up to micropython.
+Which should work with a little `import urequests as requets` but that `somefile.cbor` is a new mystery. Thankfully a linked document there provides a little help code that I'll paste here and work up to micropython.
 
 Oh, Time. We may have to do the NTPTime thing here instead, because time in micropython is seconds since boot, but you know what, I'm gonna see how bad they check constraints. Drop it and run it.
 
-'''
+```python
 # First, install the dependencies via:
 #    $ mip.install('hmac')
 
@@ -204,4 +208,5 @@ res = requests.post(url='https://ingestion.edgeimpulse.com/api/training/data',
 if (res.status_code == 200):
     print('Uploaded file to Edge Impulse', res.status_code, res.content)
 else:
-    print('Failed to upload file to Edge Impulse', res.status_code, res.content)'''
+    print('Failed to upload file to Edge Impulse', res.status_code, res.content)
+```
