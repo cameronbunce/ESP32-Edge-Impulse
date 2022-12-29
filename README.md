@@ -16,7 +16,9 @@ These instructions, modified  from https://micropython.org/download/esp32/ are w
 Python3 updated to 3.11 to ensure latest pip3 
 Download esptool - pip3 install esptool
 
+```
 cameron@Kitchen-iMac Downloads % esptool.py --chip esp32 -p /dev/tty.usbserial-0001 --baud 460800 write_flash -z 0x1000 esp32-20220618-v1.19.1.bin
+```
 
 The part about switching to MicroPython that's great is that I don't have to fiddle with the Adafruit sensor package or library folders, the DS18x20 driver is rolled in. That means I'm starting fresh on my main.py file.
 
@@ -111,7 +113,7 @@ which was pretty cool
 # Now
 I'm looking at my project keys page in Edge Impulse and there is a link the 'Data Acquisition Format' with examples. 
 
-The Ingestion Service offers this example 
+The Ingestion Service offers this example (https://docs.edgeimpulse.com/reference/data-ingestion/ingestion-api#data-acquisition-format)
 
 ```python
 # Install requests via: `pip3 install requests`
@@ -132,11 +134,12 @@ with open('somefile.cbor', 'r') as file:
         print('Failed to upload file to Edge Impulse', res.status_code, res.content)
 ```
 
-Which should work with a little `import urequests as requets` but that `somefile.cbor` is a new mystery. Thankfully a linked document there provides a little help code that I'll paste here and work up to micropython.
+Which should work with a little `import urequests as requets` but that `somefile.cbor` is a new mystery. Thankfully a linked document there (https://docs.edgeimpulse.com/reference/data-ingestion/data-acquisition-format) provides a little help code that I'll paste here and work up to micropython.
 
 Oh, Time. We may have to do the NTPTime thing here instead, because time in micropython is seconds since boot, but you know what, I'm gonna see how bad they check constraints. Drop it and run it.
 
 ```python
+#!/ micropython
 # First, install the dependencies via:
 #    $ mip.install('hmac')
 
@@ -210,3 +213,20 @@ if (res.status_code == 200):
 else:
     print('Failed to upload file to Edge Impulse', res.status_code, res.content)
 ```
+
+Micropython doesn't like ~~the null string manipulation~~, balking at us with `NameError: name '​' isn't defined` 
+Micropython doesn't like your assumptions, or your copy-pasta line-end characters. 
+
+After a clean-up, `Uploaded file to Edge Impulse 200 b'idle01.3lan8ief.json'` was waiting for me on the terminal. Sweet, now lets make it actually read a sensor, and pack that in the json body. I'll leave the above for boilerplate reference, and continue editing in the EdgeImpulse.py file.
+
+`ampy -p /dev/tty.usbserial-0001 put EdgeImpulse.py main.py  0.21s user 0.11s system 1% cpu 16.067 total`
+And with that we have a one-shot data-zooka, sending temperature readings that will let us build a model!
+
+Depending on the time sleep cycles, this can be a long running program even if not an infinte loop, so if you need to kill it with fire, control-C to break the program from USB Serial and get a REPL, then
+```python
+import os
+os.listdir()
+os.remove("main.py")
+os.listdir()
+```
+and then send it again
