@@ -8,6 +8,11 @@
 #   ssid = "..."
 #   password = "..."
 
+
+#   this isn't currently funtioning 100% as expected for multiple sensors connected
+#   there's also no indication apart from the USB-serial interface that anything is happening, 
+#   so if you're using it in the field, PR welcome with your LED or oled screen for field status messages
+
 import json, time, hmac, hashlib
 import ubinascii, network, ds18x20, onewire, secret
 import urequests as requests
@@ -18,8 +23,8 @@ from machine import Pin, WDT
 debug = True
 
 if debug:
-    wdt = WDT(timeout=10000)
-    print("Watchdog Timer started with 10s timeout")
+    # wdt = WDT(timeout=10000)
+    # print("Watchdog Timer started with 10s timeout") 
 
 ow = onewire.OneWire(Pin(2))
 ds = ds18x20.DS18X20(ow)
@@ -28,33 +33,31 @@ ds.convert_temp()
 
 if debug:
     print("DS18B20 scan complete")
-    wdt.feed()
+    #wdt.feed()
 
 sensors = ""
 for rom in roms:
-    sensors+='{ "name": "'+ubinascii.hexlify(rom).decode()+'", "units": "Celsius" },'
+    sensors+="{ 'name': '"+ubinascii.hexlify(rom).decode()+"', 'units': 'Celsius' },"
 sensors.rstrip(',') # I didn't say it would be fancy
 
 if debug:
-    wdt.feed()
+    #wdt.feed()
     print("Taking temperature readings")
 
 # determine period
-readings = 10
+readings = 0
 values = []
-
-while readings > 0:
-    # ds.convert_temp()
-    time.sleep(750)
+    
+while readings < 10:
     read_pass = []
+    ds.convert_temp()
     for rom in roms:
-        read_pass.append(ds.read_temp(rom))
-    readings-=1
+        temp = ds.read_temp(rom)
+        read_pass.append(temp)
     values.append(read_pass)
-    if debug:
-        print(read_pass)
-        wdt.feed() # currently breaking here, not getting to this feed point even with the read_temp() ignored. 
-    time.sleep(100)
+    print(values)
+    time.sleep(10)
+    readings+=1
 
 if debug:
     print("Wifi setup")
@@ -68,7 +71,7 @@ if not wlan.isconnected():
 
 if debug:
     print("connected")
-    wdt.feed()
+    #wdt.feed()
 
 HMAC_KEY = secret.hmac_key
 API_KEY = secret.api_key
@@ -92,14 +95,14 @@ data = {
         "device_type": "ESP32-DS18B20",
         "interval_ms": 10,
         "sensors": [
-            sensors
+            { "name": "28aa91814a140173", "units": "Celsius" }
         ],
         "values": values
     }
 }
 if debug:
     print(data)
-    wdt.feed()
+    #wdt.feed()
 
 # encode in JSON
 encoded = json.dumps(data)
@@ -117,7 +120,7 @@ encoded = json.dumps(data)
 # and upload the file
 if debug:
     print("Sending")
-    wdt.feed()
+    #wdt.feed()
 
 res = requests.post(url='https://ingestion.edgeimpulse.com/api/training/data',
                     data=encoded,

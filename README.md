@@ -225,8 +225,18 @@ And with that we have a one-shot data-zooka, sending temperature readings that w
 Depending on the time sleep cycles, this can be a long running program even if not an infinte loop, so if you need to kill it with fire, control-C to break the program from USB Serial and get a REPL, then
 ```python
 import os
-os.listdir()
 os.remove("main.py")
-os.listdir()
 ```
-and then send it again
+and then send it again. I found that my workspace is VSCode for these md notes, git and file management, and mu for a scratchpad, using the REPL and run functions like above. Here are a few of the quick and easy 'run' functions for setting this up from scratch. Since I got worried and reloaded my board and had to start from scratch.
+
+```python
+import network, mip, secret
+wlan = network.WLAN(network.STA_IF)
+wlan.active(True)
+if not wlan.isconnected():
+    wlan.connect(secret.ssid, secret.password)
+    while not wlan.isconnected():
+        pass
+
+mip.install('hmac')
+```
