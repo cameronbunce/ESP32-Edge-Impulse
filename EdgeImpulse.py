@@ -95,7 +95,7 @@ data = {
         "device_type": "ESP32-DS18B20",
         "interval_ms": 10,
         "sensors": [
-            { "name": "28aa91814a140173", "units": "Celsius" }
+            { "name": "Temperature", "units": "Celsius" }
         ],
         "values": values
     }
