@@ -240,3 +240,46 @@ if not wlan.isconnected():
 
 mip.install('hmac')
 ```
+
+## Next Steps
+
+# Getting Classy
+
+I had to brush up on my pythonic class structure and inheritance, and delete a few curly braces...
+
+then I popped this little mess in my REPL
+```python
+>>> class wrapper:
+...     def __init__(self, net):
+...         self.wlan = net
+...     def connect(self, ssid, password):
+...         self.wlan.active(True)
+...         if not self.wlan.isconnected():
+...             while not self.wlan.isconnected():
+...                 pass
+...
+>>> import network
+>>> wlan = network.WLAN(STA_IF)
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+NameError: name 'STA_IF' isn't defined
+>>> wlan = network.WLAN(network.STA_IF)
+>>> another = wrapper(wlan)
+>>> import secret
+>>> another.connect(secret.ssid, secret.password)
+```
+
+and it didn't connect because I'm in the basement, but it was a really good example of what I mean to do
+
+I want to box up some of the work here, and get down to a saved-state, multi-sensor, portable ingest tool
+
+I'm thinking that it will be used like this
+
+```python
+import myingestthing, secret
+
+eat_it = myingestthing.ingest(hmac_key, api_key)
+
+
+
+```
