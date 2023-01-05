@@ -25,7 +25,7 @@ else:
     myAPI = EdgeImpulse.EIAPI(secret.api, secret.hmac, secret.ssid, secret.password)
 
     for sensor in mysensors.getSensors():
-        if myAPI.sendValues(mysensors.getValues(sensor)):
+        if myAPI.sendValues(mysensors.getValues(sensor), 600000):
             mysensors.clearValues(sensor)
         else:
             print(myAPI.getMessage())
