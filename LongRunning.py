@@ -21,7 +21,7 @@
 # first checking to see if the intended SSID is available
 # then attempting connect and send 'values' 
 # Currently values is expected to be a list, but this will have to change
-def send_values(values):{
+def send_values(values):
     import secret, json, ubinascii, network, hashlib, hmac
     HMAC_KEY = secret.hmac_key
     API_KEY = secret.api_key
@@ -62,7 +62,7 @@ def send_values(values):{
             }
         }
         # encode data to json
-        encded = json.dumps(data)
+        encoded = json.dumps(data)
         # create signature based on blank signature field
         signature = hmac.new(bytes(HMAC_KEY, 'utf-8'), msg = encoded.encode('utf-8'), digestmod = hashlib.sha256).hexdigest()
 
@@ -84,7 +84,7 @@ def send_values(values):{
         else:
             return False
 
-}
+
 
 #   InitializeValues
 #   Check folder /values for earlier readings

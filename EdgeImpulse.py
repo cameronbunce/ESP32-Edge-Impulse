@@ -1,135 +1,114 @@
-#!/ micropython
-# First, install the dependencies via:
-#    $ mip.install('hmac')
+# EdgeImpulse Class
+# uploader = EdgeImpulse(hmac, api, ssid, password)
+# uplaoder.sendValues([[15], [18], [123], 10000)
+# uploader.sendValues([[15, 18, 123], [16, 19, 124], [17, 20, 125] ], 10)
 
-#   secret.py
-#   api_key = "ei_7..."
-#   hmac_key = "..."
-#   ssid = "..."
-#   password = "..."
+# one of the assumptions is that the class is handling the network connectivity
+# this works in my use case but I'm open to devising an alternate constructor 
+# or similar
+# This depends on hmac being available ( typically as /lib/hmac.mpy on the device )
+# see https://github.com/cameronbunce/ESP32-Edge-Impulse/blob/main/README.md for details 
+
+import network
 
 
-#   this isn't currently funtioning 100% as expected for multiple sensors connected
-#   there's also no indication apart from the USB-serial interface that anything is happening, 
-#   so if you're using it in the field, PR welcome with your LED or oled screen for field status messages
 
-import json, time, hmac, hashlib
-import ubinascii, network, ds18x20, onewire, secret
-import urequests as requests
-from machine import Pin, WDT
-
-# This is copy-pasta right now, 
-# I'll organize it as the data requires
-debug = True
-
-if debug:
-    # wdt = WDT(timeout=10000)
-    # print("Watchdog Timer started with 10s timeout") 
-
-ow = onewire.OneWire(Pin(2))
-ds = ds18x20.DS18X20(ow)
-roms = ds.scan()
-ds.convert_temp()
-
-if debug:
-    print("DS18B20 scan complete")
-    #wdt.feed()
-
-sensors = ""
-for rom in roms:
-    sensors+="{ 'name': '"+ubinascii.hexlify(rom).decode()+"', 'units': 'Celsius' },"
-sensors.rstrip(',') # I didn't say it would be fancy
-
-if debug:
-    #wdt.feed()
-    print("Taking temperature readings")
-
-# determine period
-readings = 0
-values = []
+class EdgeImpulse:
+    def __init__(self, hmac_key, api_key, ssid, password):
+        import network, ubinascii
+        self.wlan = network.WLAN(network.STA_IF)
+        self.hmac = hmac_key
+        self.api = api_key
+        self.ssid = ssid
+        self.password = password
+        self.message = ""
+        self.mac = ubinascii.hexlify(self.wlan.config('mac')).decode()
     
-while readings < 10:
-    read_pass = []
-    ds.convert_temp()
-    for rom in roms:
-        temp = ds.read_temp(rom)
-        read_pass.append(temp)
-    values.append(read_pass)
-    print(values)
-    time.sleep(10)
-    readings+=1
+    def getMesage(self):
+        messageOut = self.message
+        self.message = ""
+        return messageOut
 
-if debug:
-    print("Wifi setup")
+    def readMessage(self):
+        return self.message
 
-wlan = network.WLAN(network.STA_IF)
-wlan.active(True)
-if not wlan.isconnected():
-    wlan.connect(secret.ssid, secret.password)
-    while not wlan.isconnected():
-        pass
+    def __addMessage(self, update):
+        # Should probably check for the stringness of update
+        hold = self.message
+        self.message = update+"\n\r"+hold
 
-if debug:
-    print("connected")
-    #wdt.feed()
+    def online(self):
+        # get online if not online, return false if we can't find our SSID
+        if self.wlan.isconnected():
+            return True
+        else:
+            ssid_list = []
+            wlan.active(True)
+            rawList = self.wlan.scan()
+            for one in rawList:
+                ssid_list.append(one[0].decode())
+            if not self.ssid in ssid_list:
+                self.__addMessage("SSID Not Found")
+                return False
+            else:
+                self.wlan.connect(self.ssid, self.password)
+                while not self.wlan.is_connected():
+                    pass
+                return True
+    
+    def offline(self):
+        # return the radio to a lower power state
+        self.wlan.active(False)
 
-HMAC_KEY = secret.hmac_key
-API_KEY = secret.api_key
-mac = ubinascii.hexlify(wlan.config('mac')).decode()
+    def __packandship(self, values, interval_ms):
+        import time, json, hmac, urequests, hashlib
 
-# empty signature (all zeros). HS256 gives 32 byte signature, and we encode in hex, so we need 64 characters here
-emptySignature = ''.join(['0'] * 64)
+        # empty signature (all zeros). HS256 gives 32 byte signature, and we encode in hex, so we need 64 characters here
+        emptySignature = ''.join(['0'] * 64)
+        data = {
+            "protected": {
+                "ver": "v1",
+                "alg": "HS256",
+                "iat": time.time() # epoch time, seconds since poweron
+            },
+            "signature": emptySignature,
+            "payload": {
+                "device_name": self.mac,
+                "device_type": "ESP32-DS18B20",
+                "interval_ms": interval_ms,
+                "sensors": [
+                    { "name": "Temperature", "units": "Celsius" }
+                ],
+                "values": values
+            }
+        }
+        encoded = json.dumps(data)
+        # create signature based on blank signature field
+        signature = hmac.new(bytes(self.hmac, 'utf-8'), msg = encoded.encode('utf-8'), digestmod = hashlib.sha256).hexdigest()
 
-if debug:
-    print("Packing Data")
-
-data = {
-    "protected": {
-        "ver": "v1",
-        "alg": "HS256",
-        "iat": time.time() # epoch time, seconds since 1970
-    },
-    "signature": emptySignature,
-    "payload": {
-        "device_name": mac,
-        "device_type": "ESP32-DS18B20",
-        "interval_ms": 10,
-        "sensors": [
-            { "name": "Temperature", "units": "Celsius" }
-        ],
-        "values": values
-    }
-}
-if debug:
-    print(data)
-    #wdt.feed()
-
-# encode in JSON
-encoded = json.dumps(data)
-
-if debug:
-    print("Signing")
-
-# sign message
-signature = hmac.new(bytes(HMAC_KEY, 'utf-8'), msg = encoded.encode('utf-8'), digestmod = hashlib.sha256).hexdigest()
-
-# set the signature again in the message, and encode again
-data['signature'] = signature
-encoded = json.dumps(data)
-
-# and upload the file
-if debug:
-    print("Sending")
-    #wdt.feed()
-
-res = requests.post(url='https://ingestion.edgeimpulse.com/api/training/data',
-                    data=encoded,
-                    headers={
-                        'Content-Type': 'application/json',
-                        'x-file-name': 'idle01',
-                        'x-api-key': API_KEY
-                    })
-if (res.status_code == 200):
-    print('Uploaded file to Edge Impulse', res.status_code, res.content)
-else:
-    print('Failed to upload file to Edge Impulse', res.status_code, res.content)
+        # update signature field to sign the message
+        data['signature'] = signature
+        post = urequests.post(url='https://ingestion.edgeimpulse.com/api/training/data',
+                            data=encoded,
+                            headers={
+                                'Content-Type': 'application/json',
+                                'x-file-name': 'idle01',
+                                'x-api-key': self.api
+                            })
+        if (res.status_code == 200):
+            return True
+        else:
+            self.__addMessage(res.content)
+            return False
+    
+    def sendValues(self, values, interval_ms):
+        if self.online():
+            # We're online, send the values
+            if self.__packandship(values, interval_ms):
+                return True
+            else:
+                return False
+        else:
+            # Not online
+            self.__addMessage("Not Online")
+            return False

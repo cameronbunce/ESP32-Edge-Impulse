@@ -278,8 +278,12 @@ I'm thinking that it will be used like this
 ```python
 import myingestthing, secret
 
-eat_it = myingestthing.ingest(hmac_key, api_key)
+eat_it = myingestthing.ingest(hmac_key, api_key, ssid, password)
 
+if eat_it.send(values):
+    clear(values)
+else:
+    print(eat_it.error_msg)    
 
 
 ```
