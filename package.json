@@ -1,0 +1,11 @@
+{
+    "urls": [
+      ["EdgeImpulse.py", "github:cameronbunce/ESP32-Edge-Impulse/EdgeImpulse.py"]
+    ],
+    "deps": [
+      ["hmac", "latest"],
+
+    ],
+    "version": "0.1"
+  }
+  

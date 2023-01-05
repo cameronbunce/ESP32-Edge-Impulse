@@ -1,5 +1,5 @@
-# EdgeImpulse Class
-# uploader = EdgeImpulse(hmac, api, ssid, password)
+# EIAPI Class
+# uploader = EIAPI(hmac, api, ssid, password)
 # uplaoder.sendValues([[15], [18], [123], 10000)
 # uploader.sendValues([[15, 18, 123], [16, 19, 124], [17, 20, 125] ], 10)
 
@@ -9,11 +9,28 @@
 # This depends on hmac being available ( typically as /lib/hmac.mpy on the device )
 # see https://github.com/cameronbunce/ESP32-Edge-Impulse/blob/main/README.md for details 
 
+# Public methods 
+# EIAPI.sendValues(values, interval_ms) to upload one sensor's data
+# EIAPI.offline() to return radio to a lower power state
+# EIAPI.getMessage() to determine the failure mode, will contain all error messages
+#   since last call of getMessage(), 
+#   such as "SSID Not Found" 
+#   or non-http200 responses from upload attempts
+#   Newest will be on top
+#   Messages are cleared once returned with getMessage(), 
+# EIAPI.readMessage() does not clear, but returns the same as above
+# EIAPI.online() is not strictly necessary, as sendValues calls it 
+
+# To Do
+# - create a generic sendValues that takes the sensor value:
+#                "sensors": [
+#                    { "name": "Temperature", "units": "Celsius" }
+#                ],
+#       as input
+
 import network
 
-
-
-class EdgeImpulse:
+class EIAPI:
     def __init__(self, hmac_key, api_key, ssid, password):
         import network, ubinascii
         self.wlan = network.WLAN(network.STA_IF)
@@ -24,7 +41,7 @@ class EdgeImpulse:
         self.message = ""
         self.mac = ubinascii.hexlify(self.wlan.config('mac')).decode()
     
-    def getMesage(self):
+    def getMessage(self):
         messageOut = self.message
         self.message = ""
         return messageOut
