@@ -1,10 +1,10 @@
 class DS18B20Reader:
     def __init__(self, pinnumber):
-        import onewire, ds18b20
+        import onewire, ds1xb20
         from machine import Pin
         # setup Dallas sensor 
         self.ow = onewire.OneWire(Pin(pinnumber))
-        self.dallassensor = ds18b20.DS18B20(self.ow)
+        self.dallassensor = ds18x20.DS18X20(self.ow)
         self.Values = {}
         self.initializeValues()
 
@@ -60,6 +60,6 @@ class DS18B20Reader:
         count = 0
         for key in self.Values.keys():
             number = len(self.Values[key])
-            if lnumber > count:
+            if number > count:
                 count = number
         return count
