@@ -22,12 +22,13 @@ mysensors.initializeValues()
 if mysensors.readCount() < 145:# 24 hours of readings based on a period of 10 minutes being 144
     mysensors.updateValues()
 else:
-    myAPI = EdgeImpulse.EIAPI(secret.api_key, secret.hmac.key, secret.ssid, secret.password)
+    myAPI = EdgeImpulse.EIAPI(secret.api_key, secret.hmac_key, secret.ssid, secret.password)
 
     for sensor in mysensors.getSensors():
         if myAPI.sendValues(mysensors.getValues(sensor), 600000):
             mysensors.clearValues(sensor)
         else:
             print(myAPI.getMessage())
+            mysensors.updateValues()
 deepsleep(600000)
 

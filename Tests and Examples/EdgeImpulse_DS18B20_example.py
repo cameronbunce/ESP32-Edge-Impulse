@@ -22,7 +22,7 @@ from machine import Pin, WDT
 # I'll organize it as the data requires
 debug = True
 
-if debug:
+#if debug:
     # wdt = WDT(timeout=10000)
     # print("Watchdog Timer started with 10s timeout") 
 

@@ -1,6 +1,6 @@
 class DS18B20Reader:
     def __init__(self, pinnumber):
-        import onewire, ds1xb20
+        import onewire, ds18x20
         from machine import Pin
         # setup Dallas sensor 
         self.ow = onewire.OneWire(Pin(pinnumber))
@@ -9,7 +9,7 @@ class DS18B20Reader:
         self.initializeValues()
 
     def getSensors(self):
-        return Values.keys()
+        return self.Values.keys()
 
 #   initializeValues
 #   Check values.json for earlier readings

@@ -27,32 +27,37 @@
 #                    { "name": "Temperature", "units": "Celsius" }
 #                ],
 #       as input
+# - write messages to file for persistence 
 
 import network
 
 class EIAPI:
     def __init__(self, hmac_key, api_key, ssid, password):
-        import network, ubinascii
+        import ubinascii, os
         self.wlan = network.WLAN(network.STA_IF)
         self.hmac = hmac_key
         self.api = api_key
         self.ssid = ssid
         self.password = password
-        self.message = ""
+        if 'message.txt' not in os.listdir('/'):
+            self.message = []
+        else:
+            with open('mesage.txt') as filein:
+                self.message = filein.readlines()
         self.mac = ubinascii.hexlify(self.wlan.config('mac')).decode()
     
     def getMessage(self):
         messageOut = self.message
-        self.message = ""
+        self.message = []
         return messageOut
 
     def readMessage(self):
         return self.message
 
     def __addMessage(self, update):
-        # Should probably check for the stringness of update
-        hold = self.message
-        self.message = update+"\n\r"+hold
+        self.message.append(update) # add new message to tail, store for reference
+        with open('message.txt', 'w') as fileout:
+            fileout.writelines(self.message)
 
     def online(self):
         # get online if not online, return false if we can't find our SSID
@@ -60,7 +65,7 @@ class EIAPI:
             return True
         else:
             ssid_list = []
-            wlan.active(True)
+            self.wlan.active(True)
             rawList = self.wlan.scan()
             for one in rawList:
                 ssid_list.append(one[0].decode())
@@ -69,7 +74,7 @@ class EIAPI:
                 return False
             else:
                 self.wlan.connect(self.ssid, self.password)
-                while not self.wlan.is_connected():
+                while not self.wlan.isconnected():
                     pass
                 return True
     
@@ -105,11 +110,11 @@ class EIAPI:
 
         # update signature field to sign the message
         data['signature'] = signature
-        post = urequests.post(url='https://ingestion.edgeimpulse.com/api/training/data',
+        res = urequests.post(url='https://ingestion.edgeimpulse.com/api/training/data',
                             data=encoded,
                             headers={
                                 'Content-Type': 'application/json',
-                                'x-file-name': 'idle01',
+                                'x-file-name': 'DS18B20Long',
                                 'x-api-key': self.api
                             })
         if (res.status_code == 200):
