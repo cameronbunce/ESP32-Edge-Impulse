@@ -16,19 +16,22 @@ from machine import deepsleep
 #   If 24hrs of data is stored in the file, send it to Edge Impulse
 #   Sleep for 10 minutes
 
+interval = 600000 # 10 minutes
+SensorPin = 2
+ReadingBatch = 145 # 24 hours of readings based on an interval of 10 minutes being 144
 
-mysensors = DS18B20Reader.DS18B20Reader(2)
+mysensors = DS18B20Reader.DS18B20Reader(SensorPin)
 mysensors.initializeValues()
-if mysensors.readCount() < 145:# 24 hours of readings based on a period of 10 minutes being 144
+if mysensors.readCount() < ReadingBatch:
     mysensors.updateValues()
 else:
     myAPI = EdgeImpulse.EIAPI(secret.api_key, secret.hmac_key, secret.ssid, secret.password)
 
     for sensor in mysensors.getSensors():
-        if myAPI.sendValues(mysensors.getValues(sensor), 600000):
+        if myAPI.sendValues(mysensors.getValues(sensor), interval):
             mysensors.clearValues(sensor)
         else:
             print(myAPI.getMessage())
             mysensors.updateValues()
-deepsleep(600000)
+deepsleep(interval)
 

@@ -222,7 +222,7 @@ After a clean-up, `Uploaded file to Edge Impulse 200 b'idle01.3lan8ief.json'` wa
 `ampy -p /dev/tty.usbserial-0001 put EdgeImpulse.py main.py  0.21s user 0.11s system 1% cpu 16.067 total`
 And with that we have a one-shot data-zooka, sending temperature readings that will let us build a model!
 
-Depending on the time sleep cycles, this can be a long running program even if not an infinte loop, so if you need to kill it with fire, control-C to break the program from USB Serial and get a REPL, then
+Depending on the time of sleep cycles, this can be a long running program even if not an infinte loop, so if you need to kill it with fire, control-C to break the program from USB Serial and get a REPL, then
 ```python
 import os
 os.remove("main.py")

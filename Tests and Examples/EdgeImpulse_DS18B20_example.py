@@ -18,15 +18,14 @@ import ubinascii, network, ds18x20, onewire, secret
 import urequests as requests
 from machine import Pin, WDT
 
-# This is copy-pasta right now, 
-# I'll organize it as the data requires
 debug = True
+SensorPin = 2 # a DS18B20 attached on pin 2
 
 #if debug:
     # wdt = WDT(timeout=10000)
     # print("Watchdog Timer started with 10s timeout") 
 
-ow = onewire.OneWire(Pin(2))
+ow = onewire.OneWire(Pin(SensorPin))
 ds = ds18x20.DS18X20(ow)
 roms = ds.scan()
 ds.convert_temp()
